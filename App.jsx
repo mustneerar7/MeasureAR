@@ -10,28 +10,42 @@ const {CustomMethods} = NativeModules;
 
 export default function App() {
   const [data, setData] = useState('');
+  const [currentOption, setCurrentOption] = useState(0);
 
   useEffect(() => {
     const val = NativeModules.LoaderModule.fetchData();
-    setData(val);
     console.log(val);
   });
 
   useEffect(() => {
-    NativeModules.LoaderModule.fetchStickerData(
-      (data) => {
-        if(data){
+    NativeModules.LoaderModule.fetchStickerData(data => {
+      if (data) {
         console.log(data);
-        Alert.alert('Result', data);
-        }
       }
-    )
+    });
   });
+
+  useEffect(() => {
+    if (data) {
+      Alert.alert('Result', data);
+    }
+  }, [data]);
 
   function reloadNativeModule(moduleName) {
     NativeModules.DevSettings.reloadWithReason(`Reload: ${moduleName}`);
-    const val = NativeModules.LoaderModule.fetchData();
-    Alert.alert('Result', val + 'm');
+
+    if (currentOption === 0) {
+      const val = NativeModules.LoaderModule.fetchData();
+      if (val != 0) {
+        setData(val + 'm');
+      }
+    } else {
+      NativeModules.LoaderModule.fetchStickerData(d => {
+        if (d) {
+          setData(d);
+        }
+      });
+    }
   }
 
   const nativeopenAugmentedView = async () => {
@@ -45,6 +59,7 @@ export default function App() {
 
   function decideLauncher() {
     if (Platform.OS === 'android') {
+      setCurrentOption(0);
       nativeAndroidActivity();
     } else {
       nativeopenAugmentedView();
@@ -77,7 +92,7 @@ export default function App() {
 
       <TouchableOpacity
         style={{
-          marginTop:20,
+          marginTop: 20,
           width: 300,
           height: 60,
           backgroundColor: 'grey',
@@ -85,31 +100,34 @@ export default function App() {
           justifyContent: 'center',
           borderRadius: 100,
         }}
-        onPress={()=>{reloadNativeModule('LoaderModule')}}>
+        onPress={() => {
+          reloadNativeModule('LoaderModule');
+        }}>
         <Text style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
           {' '}
           Show Result{' '}
         </Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-      style={{
-        marginTop:20,
-        width: 300,
-        height: 60,
-        backgroundColor: 'red',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 100,
-      }}
-      onPress={()=>NativeModules.LoaderModule.launchStickerSession()}>
+      <TouchableOpacity
+        style={{
+          marginTop: 20,
+          width: 300,
+          height: 60,
+          backgroundColor: 'red',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 100,
+        }}
+        onPress={() => {
+          setCurrentOption(1);
+          NativeModules.LoaderModule.launchStickerSession();
+        }}>
         <Text style={{color: 'white', fontSize: 16, fontWeight: 'bold'}}>
           {' '}
           Image{' '}
         </Text>
-
       </TouchableOpacity>
-
     </View>
   );
 }
